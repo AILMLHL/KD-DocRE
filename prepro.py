@@ -77,24 +77,29 @@ def read_docred(file_in, tokenizer, max_seq_length=1024):
         sents = []
         sent_map = []
 
+        # 读取entity的各种信息
         entities = sample['vertexSet']
         entity_start, entity_end = [], []
         for entity in entities:
             for mention in entity:
-                sent_id = mention["sent_id"]
-                pos = mention["pos"]
-                entity_start.append((sent_id, pos[0],))
-                entity_end.append((sent_id, pos[1] - 1,))
-        for i_s, sent in enumerate(sample['sents']):
+                sent_id = mention["sent_id"] # entity的id
+                pos = mention["pos"] # entity的位置index信息
+                entity_start.append((sent_id, pos[0],)) # entity的id和起始index
+                entity_end.append((sent_id, pos[1] - 1,)) # entity的id和末尾index，-1是因为index从0开始
+        for i_s, sent in enumerate(sample['sents']): # sents键值表示的是entity所在文档,i_s表示这个句子的id，sent表示句子
             new_map = {}
-            #sents += [tokenizer.cls_token]
-            for i_t, token in enumerate(sent):
+            #sents += [tokenizer.cls_token] # 这里sents被注释了，而下面又使用了，可能需要取消注释
+            for i_t, token in enumerate(sent): # 每个sent表示文档的一段话,i_t表示这单词的id,token表示每个单词
                 tokens_wordpiece = tokenizer.tokenize(token)
-                if (i_s, i_t) in entity_start:
+                '''
+                这两个if语句的作用也就是paper里面提及的策略：
+                在出现的实体的开始和结束位置加上一个特殊的标记“*”
+                '''
+                if (i_s, i_t) in entity_start: 
                     tokens_wordpiece = ["*"] + tokens_wordpiece
                 if (i_s, i_t) in entity_end:
                     tokens_wordpiece = tokens_wordpiece + ["*"]
-                new_map[i_t] = len(sents)
+                new_map[i_t] = len(sents) # 创建一个map，存储这个单词的id和这段文档长度的映射关系
                 sents.extend(tokens_wordpiece)
             #sents += [tokenizer.sep_token]
             
