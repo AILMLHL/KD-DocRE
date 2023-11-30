@@ -88,6 +88,7 @@ def read_docred(file_in, tokenizer, max_seq_length=1024):
                 entity_end.append((sent_id, pos[1] - 1,)) # entity的id和末尾index，-1是因为index从0开始
         for i_s, sent in enumerate(sample['sents']): # sents键值表示的是entity所在文档,i_s表示这个句子的id，sent表示句子
             new_map = {}
+            #tokenizer.cls_token是在自然语言处理（NLP）中使用的一个特殊标记，通常用于表示文本序列的开始。
             #sents += [tokenizer.cls_token] # 这里sents被注释了，而下面又使用了，可能需要取消注释
             for i_t, token in enumerate(sent): # 每个sent表示文档的一段话,i_t表示这单词的id,token表示每个单词
                 tokens_wordpiece = tokenizer.tokenize(token)
@@ -99,17 +100,18 @@ def read_docred(file_in, tokenizer, max_seq_length=1024):
                     tokens_wordpiece = ["*"] + tokens_wordpiece
                 if (i_s, i_t) in entity_end:
                     tokens_wordpiece = tokens_wordpiece + ["*"]
-                new_map[i_t] = len(sents) # 创建一个map，存储这个单词的id和这段文档长度的映射关系
+                new_map[i_t] = len(sents) # 创建一个map，存储这个单词的id和当前sents的长度的映射关系
                 sents.extend(tokens_wordpiece)
+            # 感觉这里的tokenizer.sep_token和上面的tokenizer.cls_token是一起使用的
             #sents += [tokenizer.sep_token]
             
-            new_map[i_t + 1] = len(sents)
+            new_map[i_t + 1] = len(sents) # 可能new_map这里有坑，小心一点
             
-            sent_map.append(new_map)
+            sent_map.append(new_map) # sent_map保存的应该是每个文档处理后的特征
         
         
-        sent_starts = [x[0] for x in sent_map]
-        sentid_mask = torch.zeros( (len(sents) + 2))
+        sent_starts = [x[0] for x in sent_map] # sent_starts应该是文档
+        sentid_mask = torch.zeros( (len(sents) + 2)) # 这里的+2应该就是上面的tokenizer.sep_token和tokenizer.cls_token，不确定猜的
         #sentid_mask = [0] * len(sents)
         for sent_id in range(len(sent_starts)):
             sentid_mask[sent_starts[sent_id]:] = (sent_id+1)
@@ -118,10 +120,11 @@ def read_docred(file_in, tokenizer, max_seq_length=1024):
         if "labels" in sample:
             for label in sample['labels']:
                 #evidence = label['evidence']
-                if label['r'] not in docred_rel2id.keys():
+                if label['r'] not in docred_rel2id.keys():# r应该是指的是relation
                     continue
                 r = int(docred_rel2id[label['r']])
-                if (label['h'], label['t']) not in train_triple:
+                # 下面表明了，h和t相同，可能存在不同的relation即r
+                if (label['h'], label['t']) not in train_triple: # h指的是关系三元组的头部实体，t即尾部实体
                     train_triple[(label['h'], label['t'])] = [
                         {'relation': r}]
                 else:
