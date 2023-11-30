@@ -15,10 +15,10 @@ class AFLoss(nn.Module):
     def forward(self, logits, labels):
         # Adapted from Focal loss https://arxiv.org/abs/1708.02002, multi-label focal loss https://arxiv.org/abs/2009.14119
         # TH label 
-        th_label = torch.zeros_like(labels, dtype=torch.float).to(labels)
+        th_label = torch.zeros_like(labels, dtype=torch.float).to(labels) # to(labels) 确保 th_label 张量与 labels 张量位于同一设备上
         th_label[:, 0] = 1.0
         labels[:, 0] = 0.0
-        label_idx = labels.sum(dim=1)
+        label_idx = labels.sum(dim=1) # dim=1 表示沿着矩阵的行进行求和（即沿着类别的维度）。这个求和操作的结果是一个向量，
 
         two_idx = torch.where(label_idx==2)[0]
         pos_idx = torch.where(label_idx>0)[0]
