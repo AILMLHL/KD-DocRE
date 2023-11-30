@@ -76,7 +76,7 @@ class DocREModel_KD(nn.Module):
         self.hidden_size = config.hidden_size
         self.emb_size = emb_size
         self.block_size = block_size
-        self.loss_fnt = AFLoss(gamma_pos = args.gamma_pos, gamma_neg = args.gamma_neg,)
+        self.loss_fnt = AFLoss(gamma_pos = args.gamma_pos, gamma_neg = args.gamma_neg,) # paper提出的Adaptive Focal Loss
         if teacher_model is not None:
             self.teacher_model = teacher_model
             self.teacher_model.requires_grad = False
