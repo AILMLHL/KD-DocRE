@@ -25,9 +25,9 @@ class AFLoss(nn.Module):
 
         # 根据标签计数识别不同类别的索引。
         two_idx = torch.where(label_idx==2)[0] 
-        pos_idx = torch.where(label_idx>0)[0]
+        pos_idx = torch.where(label_idx>0)[0] # label_idx>0表明实体存在一个及以上的关系
 
-        neg_idx = torch.where(label_idx==0)[0]
+        neg_idx = torch.where(label_idx==0)[0] # label_idx==0表明实体不存在关系
 
         # 为正类和负类创建掩码。
         p_mask = labels + th_label # 正类掩码包括标签和TH类别。
@@ -35,8 +35,8 @@ class AFLoss(nn.Module):
         neg_target = 1- p_mask # 负类目标。
 
         # 对标签张量进行形状推断。
-        num_ex, num_class = labels.size() # 这里可以推断出labels是二维的，行代表样本数，列代表标签数
-        num_ent = int(np.sqrt(num_ex)) # num_ent：实体数，从num_ex推断得出。
+        num_ex, num_class = labels.size() # 这里可以推断出labels是二维的，行代表样本数(假如有n个实体，那么就有n*n个实体对)，列代表标签数
+        num_ent = int(np.sqrt(num_ex)) # num_ent：实体数(也就是sqrt(n*n))，从num_ex推断得出。
         # Rank each positive class to TH
         # 对每个类别的logits与阈值类别（TH）进行排名调整。
         logit1 = logits - neg_target * 1e30
